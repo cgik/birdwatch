@@ -9,4 +9,8 @@
 ```shell
 sudo apt install python3-opencv python3-picamera2
 ```
-
+## setup
+```
+uv venv --python /usr/bin/python3 --system-site-packages
+uv sync
+```
