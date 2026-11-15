@@ -23,3 +23,8 @@ build-backend = "uv_build"
 venvPath = "."
 venv = ".venv"
 extraPaths = ["vendor/picamera2"] # for dev on mac if you want, git clone https://github.com/raspberrypi/picamera2 vendor/picamera2
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+]
