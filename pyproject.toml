@@ -22,3 +22,4 @@ build-backend = "uv_build"
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
+extraPaths = ["vendor/picamera2"] # for dev on mac if you want, git clone https://github.com/raspberrypi/picamera2 vendor/picamera2
