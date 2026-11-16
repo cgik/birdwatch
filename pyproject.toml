@@ -1,8 +1,9 @@
 [project]
 name = "birdwatch"
 version = "0.1.0"
-description = "Add your description here"
+description = "A project that detects if what you choose leaves a spot you choose, in this case a bird."
 readme = "README.md"
+license = "AGPL-3.0-or-later"
 authors = [
     { name = "cgik", email = "103071318+cgik@users.noreply.github.com" }
 ]
