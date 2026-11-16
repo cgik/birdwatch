@@ -15,8 +15,6 @@ from typing import Literal
 
 import cv2
 
-from birdwatch.sources.pi import PiCameraSource
-
 INTERVAL = 60
 StopReason = Literal["duration reached", "low disk space", "write failed"]
 
@@ -32,7 +30,7 @@ def system_healthy(path: Path) -> bool:
     disk = shutil.disk_usage(path)
     free_space = disk.free / (2**30)
 
-    return free_space <= 5.0
+    return free_space >= 5.0
 
 
 def gather_sample(
@@ -71,6 +69,8 @@ def gather_sample(
 
 
 def main(argv: list[str] | None = None) -> int:
+    from birdwatch.sources.pi import PiCameraSource
+
     parser = argparse.ArgumentParser(prog="gather samples")
     parser.add_argument(
         "--duration",
