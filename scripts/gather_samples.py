@@ -7,15 +7,23 @@ import time
 import sys
 import argparse
 import shutil
+import signal
 from pathlib import Path
+from typing import Literal
 
 from birdwatch.sources.pi import PiCameraSource
 import cv2
 
 INTERVAL=60
+StopReason = Literal["duration reached", "low disk space", "write failed"]
 
-def system_healthy(path: str = "/") -> bool:
-    disk = shutil.disk_usage("/")
+def _stop_on_sigterm(signum, frame):
+    raise KeyboardInterrupt
+
+signal.signal(signal.SIGTERM, _stop_on_sigterm)
+
+def system_healthy(path: Path) -> bool:
+    disk = shutil.disk_usage(path)
     free_space = disk.free / (2**30)
 
     if free_space <= 5.0:
@@ -24,7 +32,7 @@ def system_healthy(path: str = "/") -> bool:
     return True
 
 
-def gather_sample(source, path: str, interval_s: float, duration_s: float) -> None:
+def gather_sample(source, path: Path, interval_s: float, duration_s: float) -> tuple[int, StopReason]:
     start = time.monotonic()
     end = start + duration_s
     next_capture = start
@@ -38,17 +46,23 @@ def gather_sample(source, path: str, interval_s: float, duration_s: float) -> No
         if not system_healthy(path):
             return saved, "low disk space"
 
-        file_name_time = time.strftime("%m-%u_%H-%M-%S")
-        
         frame = source.capture()
-        cv2.imwrite(f"{path}/{file_name_time}.jpg", frame.image) 
-        print(f"Saving picture to: {path}/{file_name_time}.jpg", flush=True)
+        name = frame.captured_at.strftime("%Y-%m-%dT%H-%M-%S") + ".jpg"
+
+        cv2.imwrite(f"{path}/{name}", frame.image) 
+
+        if not cv2.imwrite(str(f"{path}/{name}"), frame.image):
+            return saved, "write failed"
+
+        saved +=1 
+        print(f"Saving picture to: {name}", flush=True)
         
         next_capture += interval_s
+
         while next_capture <= time.monotonic():
             next_capture += interval_s
 
-    return saved
+    return saved, "duration reached"
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="gather samples")
