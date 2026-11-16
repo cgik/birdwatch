@@ -32,3 +32,6 @@ pythonpath = ["scripts"]
 dev = [
     "pytest>=9.2.0",
 ]
+experiments = [
+    "ultralytics>=8.4.123",
+]
