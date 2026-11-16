@@ -1,8 +1,16 @@
 import urllib.request
 
 
-def send_ntfy(server: str, topic: str, message: str, *, title: str | None = None,
-              priority: str = "default", timeout_s: float = 10, token: str | None = None) -> None:
+def send_ntfy(
+    server: str,
+    topic: str,
+    message: str,
+    *,
+    title: str | None = None,
+    priority: str = "default",
+    timeout_s: float = 10,
+    token: str | None = None,
+) -> None:
     headers = {"Priority": priority}
 
     if title:
@@ -20,4 +28,3 @@ def send_ntfy(server: str, topic: str, message: str, *, title: str | None = None
 
     with urllib.request.urlopen(request, timeout=timeout_s):
         pass
-
