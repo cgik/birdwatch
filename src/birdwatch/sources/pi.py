@@ -1,16 +1,19 @@
 import time
-from datetime import datetime
 from collections.abc import Iterator
+from datetime import datetime
 from typing import Self
 
-from picamera2 import Picamera2
-import numpy as np
 import cv2
+import numpy as np
+from picamera2 import Picamera2
 
 from birdwatch.sources.frame import Frame
 
+
 class PiCameraSource:
-    def __init__(self, detect_size: tuple[int, int] = (640, 360), interval_seconds: float = 2.0) -> None:
+    def __init__(
+        self, detect_size: tuple[int, int] = (640, 360), interval_seconds: float = 2.0
+    ) -> None:
         self._detect_size = detect_size
         self._interval_seconds = interval_seconds
         self._camera: Picamera2 | None = None
@@ -18,10 +21,10 @@ class PiCameraSource:
     def __enter__(self) -> Self:
         camera = Picamera2()
         camera.configure(
-                camera.create_preview_configuration(
-                    main={"size": (1280, 720), "format": "RGB888"},
-                    lores={"size": self._detect_size, "format": "YUV420"},
-                )
+            camera.create_preview_configuration(
+                main={"size": (1280, 720), "format": "RGB888"},
+                lores={"size": self._detect_size, "format": "YUV420"},
+            )
         )
         camera.start()
         self._camera = camera
@@ -49,7 +52,9 @@ class PiCameraSource:
         finally:
             request.release()
 
-        return Frame(image=_yuv420_to_bgr(yuv, self._detect_size), captured_at=captured_at)
+        return Frame(
+            image=_yuv420_to_bgr(yuv, self._detect_size), captured_at=captured_at
+        )
 
     def frames(self) -> Iterator[Frame]:
         while True:
