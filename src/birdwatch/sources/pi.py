@@ -1,3 +1,4 @@
+import io
 import time
 from collections.abc import Iterator
 from datetime import datetime
@@ -6,6 +7,8 @@ from typing import Self
 import cv2
 import numpy as np
 from picamera2 import Picamera2
+from picamera2.encoders import MJPEGEncoder
+from picamera2.outputs import FileOutput
 
 from birdwatch.sources.frame import Frame
 
@@ -17,6 +20,7 @@ class PiCameraSource:
         self._detect_size = detect_size
         self._interval_seconds = interval_seconds
         self._camera: Picamera2 | None = None
+        self._encoder: MJPEGEncoder | None = None
 
     def __enter__(self) -> Self:
         camera = Picamera2()
@@ -32,6 +36,7 @@ class PiCameraSource:
         return self
 
     def __exit__(self, *_: object) -> None:
+        self.stop_stream()
         if self._camera is not None:
             self._camera.stop()
             self._camera.close()
@@ -42,6 +47,21 @@ class PiCameraSource:
             raise RuntimeError("Use PiCameraSource inside a 'with' block")
 
         return self._camera
+
+    def start_stream(self, output: io.BufferedIOBase) -> None:
+        camera = self._require_started()
+        if self._encoder is not None:
+            raise RuntimeWarning("Stream is already running.")
+
+        encoder = MJPEGEncoder()
+        camera.start_encoder(encoder, FileOutput(output), name="main")
+        self._encoder = encoder
+
+    def stop_stream(self) -> None:
+        if self._encoder is not None and self._camera is not None:
+            self._camera.stop_encoder(self._encoder)
+
+        self._encoder = None
 
     def capture(self) -> Frame:
         camera = self._require_started()
