@@ -7,6 +7,7 @@ from typing import Self
 import cv2
 import numpy as np
 from picamera2 import Picamera2
+from libcamera import controls
 from picamera2.encoders import MJPEGEncoder
 from picamera2.outputs import FileOutput
 
@@ -28,6 +29,10 @@ class PiCameraSource:
             camera.create_preview_configuration(
                 main={"size": (1280, 720), "format": "RGB888"},
                 lores={"size": self._detect_size, "format": "YUV420"},
+                controls={
+                    "AfMode": controls.AfModeEnum.Continuous,
+                    "AfRange": controls.AfRangeEnum.Normal,
+                },
             )
         )
         camera.start()
