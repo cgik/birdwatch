@@ -6,8 +6,8 @@ from typing import Self
 
 import cv2
 import numpy as np
-from picamera2 import Picamera2
 from libcamera import controls
+from picamera2 import Picamera2
 from picamera2.encoders import MJPEGEncoder
 from picamera2.outputs import FileOutput
 

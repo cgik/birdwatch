@@ -15,7 +15,6 @@ from typing import Literal
 
 import cv2
 
-INTERVAL = 60
 StopReason = Literal["duration reached", "low disk space", "write failed"]
 
 
@@ -84,7 +83,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--interval",
-        type=int,
+        type=float,
         default=60,
         help="Time between captures for identification or training",
     )
@@ -101,13 +100,13 @@ def main(argv: list[str] | None = None) -> int:
 
     with PiCameraSource() as source:
         try:
-            gather_sample(source, path, args.interval, duration_s)
+            saved, reason = gather_sample(source, path, args.interval, duration_s)
         except KeyboardInterrupt:
             print("Stopped early.")
             return 1
 
-    return 0
-
+    print(f"Finished ({reason}): saved {saved} pictures to {path}", flush=True)
+    return 0 if reason == "duration reached" else 1
 
 if __name__ == "__main__":
     sys.exit(main())
