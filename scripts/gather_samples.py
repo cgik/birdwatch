@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Without tmux run: systemd-run --user --unit=gather -- uv run python scripts/gather_samples.py --interval 60 --duration 12
+# Without tmux run: systemd-run --user --same-dir --unit=gather -- uv run python scripts/gather_samples.py --duration 12
 # Check if running: systemctl --user status gather
 # Check logs: journalctl --user -u gather -f
 # Stop: systemctl --user stop gather
@@ -15,15 +15,11 @@ from typing import Literal
 
 import cv2
 
-INTERVAL = 60
 StopReason = Literal["duration reached", "low disk space", "write failed"]
 
 
 def _stop_on_sigterm(signum, _frame):
     raise KeyboardInterrupt
-
-
-signal.signal(signal.SIGTERM, _stop_on_sigterm)
 
 
 def system_healthy(path: Path) -> bool:
@@ -52,8 +48,6 @@ def gather_sample(
         frame = source.capture()
         name = frame.captured_at.strftime("%Y-%m-%dT%H-%M-%S") + ".jpg"
 
-        cv2.imwrite(f"{path}/{name}", frame.image)
-
         if not cv2.imwrite(str(f"{path}/{name}"), frame.image):
             return saved, "write failed"
 
@@ -71,7 +65,10 @@ def gather_sample(
 def main(argv: list[str] | None = None) -> int:
     from birdwatch.sources.pi import PiCameraSource
 
+    signal.signal(signal.SIGTERM, _stop_on_sigterm)
+
     parser = argparse.ArgumentParser(prog="gather samples")
+
     parser.add_argument(
         "--duration",
         type=float,
@@ -83,6 +80,12 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         default=Path("~/birdwatch-data"),
         help="Path to store images for sorting (default: ~/birdwatch-data)",
+    )
+    parser.add_argument(
+        "--interval",
+        type=float,
+        default=60,
+        help="Time between captures for identification or training",
     )
 
     args = parser.parse_args(argv)
@@ -97,13 +100,13 @@ def main(argv: list[str] | None = None) -> int:
 
     with PiCameraSource() as source:
         try:
-            gather_sample(source, path, INTERVAL, duration_s)
+            saved, reason = gather_sample(source, path, args.interval, duration_s)
         except KeyboardInterrupt:
             print("Stopped early.")
             return 1
 
-    return 0
-
+    print(f"Finished ({reason}): saved {saved} pictures to {path}", flush=True)
+    return 0 if reason == "duration reached" else 1
 
 if __name__ == "__main__":
     sys.exit(main())
